@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>camgirl</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração do Tailwind para usar a fonte 'Inter' -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'custom-dark': '#111827', // Um cinza escuro
+                        'custom-pink': '#ec4899', // Rosa vibrante
+                        'custom-pink-light': '#f9a8d4', // Rosa claro para texto
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Importa a fonte 'Inter' do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados para a barra de rolagem */
+        #linksContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        #linksContainer::-webkit-scrollbar-track {
+            background: #27272a; /* Fundo da barra de rolagem */
+            border-radius: 10px;
+        }
+        #linksContainer::-webkit-scrollbar-thumb {
+            background-color: #ec4899; /* Cor da barra de rolagem */
+            border-radius: 10px;
+            border: 2px solid #27272a;
+        }
+    </style>
+</head>
+<body class="bg-custom-dark text-custom-pink-light font-sans">
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <div class="w-full max-w-2xl p-6 md:p-8 bg-gray-900 rounded-2xl shadow-2xl shadow-custom-pink/20 border border-gray-700">
+            <!-- Cabeçalho -->
+            <h1 class="text-3xl md:text-4xl font-bold text-center text-custom-pink mb-6">
+                Gerador de Links
+            </h1>
+
+            <!-- Seção de Entrada -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                <input
+                    type="text"
+                    id="keywordInput"
+                    placeholder="Digite a palavra-chave..."
+                    class="flex-grow w-full px-4 py-3 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:outline-none focus:border-custom-pink transition-colors"
+                >
+                <button
+                    id="generateButton"
+                    class="w-full sm:w-auto px-6 py-3 bg-custom-pink text-white font-bold rounded-lg hover:bg-pink-600 transition-all transform hover:scale-105"
+                >
+                    Confirmar
+                </button>
+            </div>
+
+            <!-- Seção dos Links Gerados -->
+            <div id="linksContainerWrapper" class="hidden">
+                <h2 class="text-xl font-semibold text-custom-pink-light mb-3">Links Gerados:</h2>
+                <div id="linksContainer" class="w-full max-h-80 overflow-y-auto bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                    <!-- Links serão inseridos aqui via JavaScript -->
+                </div>
+                
+                <!-- Botão de Abrir Todos -->
+                <button
+                    id="openAllButton"
+                    class="w-full mt-4 px-6 py-3 bg-pink-700 text-white font-bold rounded-lg hover:bg-pink-800 transition-all"
+                >
+                    Abrir Todos os Links
+                </button>
+                <p id="messageArea" class="text-center text-sm text-yellow-400 mt-3"></p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Lista de templates de URL (baseada no arquivo .txt)
+        const linkTemplates = [
+            "https://nrtool.to/nrtool/search?s=TEST",
+            "https://camgirlfinder.net/models?model=TEST&platform=&gender=",
+            "https://www.camwhores.tv/search/TEST/",
+            "https://nobodyhome.ws/search.php?action=do_search&postthread=1&keywords=TEST",
+            "http://camvideos.me/search/TEST",
+            "https://recu.me/performer/TEST",
+            "https://forums.socialmediagirls.com/search/388598347/?q=TEST&o=relevance",
+            "https://simpcity.cr/search/245358518/?q=TEST&o=date",
+            "https://camsmut.com/search?q=TEST",
+            "https://striphub.cam/performer/TEST",
+            "https://www.camhub.cc/search/TEST/",
+            "https://br.spankbang.com/s/TEST/",
+            "https://pureleaks.net/?s=TEST",
+            "https://www.reddit.tube/search/TEST",
+            "https://www.camvideos.org/search/TEST/",
+            "https://nudostar.com/forum/search/81980319/?q=TEST&o=date",
+            "https://www.erome.com/search?q=TEST",
+            "https://leakedzone.com/search?search=TEST",
+            "https://camstreams.tv/search/TEST/",
+            "https://www.showcamrips.com/model/en/TEST/",
+            "https://someonesister.com/search/TEST/",
+            "https://archivebate.com/profile/TEST",
+            "https://bestcam.tv/search?search=TEST",
+            "https://camrecs.org/search/4584945/?q=TEST&o=date",
+            "https://camwh.com/search/TEST/",
+            "https://sexyforums.com/search/26691229/?q=TEST&o=relevance"
+        ];
+
+        // Referências aos elementos do DOM
+        const keywordInput = document.getElementById('keywordInput');
+        const generateButton = document.getElementById('generateButton');
+        const linksContainerWrapper = document.getElementById('linksContainerWrapper');
+        const linksContainer = document.getElementById('linksContainer');
+        const openAllButton = document.getElementById('openAllButton');
+        const messageArea = document.getElementById('messageArea');
+
+        // Array para armazenar os links gerados
+        let generatedLinks = [];
+
+        // Função para gerar os links
+        function generateLinks() {
+            const keyword = keywordInput.value.trim();
+            if (!keyword) {
+                // Se o campo estiver vazio, pisca a borda
+                keywordInput.classList.add('border-red-500');
+                setTimeout(() => {
+                    keywordInput.classList.remove('border-red-500');
+                }, 1000);
+                return;
+            }
+
+            // Limpa o container e o array
+            linksContainer.innerHTML = '';
+            generatedLinks = [];
+            messageArea.textContent = ''; // Limpa a mensagem de aviso
+
+            // Loop pelos templates e cria os links
+            linkTemplates.forEach(template => {
+                const newUrl = template.replace(/TEST/g, encodeURIComponent(keyword));
+                generatedLinks.push(newUrl);
+
+                // Cria o elemento <a>
+                const linkElement = document.createElement('a');
+                linkElement.href = newUrl;
+                linkElement.textContent = newUrl; // Mostra a URL completa
+                linkElement.target = "_blank"; // Abre em nova aba ao clicar
+                linkElement.rel = "noopener noreferrer"; // Boa prática de segurança
+                linkElement.className = "block text-custom-pink-light hover:text-white hover:underline truncate transition-colors";
+
+                linksContainer.appendChild(linkElement);
+            });
+
+            // Mostra a seção de links
+            linksContainerWrapper.classList.remove('hidden');
+        }
+
+        // Função para abrir todos os links
+        function openAllLinks() {
+            if (generatedLinks.length === 0) return;
+
+            // Aviso sobre o bloqueador de pop-ups
+            messageArea.textContent = 'Atenção: Seu navegador pode bloquear pop-ups. Permita pop-ups para este site para abrir todos os links.';
+
+            // Abre cada link em uma nova aba
+            // É importante fazer isso em um loop síncrono para aumentar a chance de o navegador permitir
+            generatedLinks.forEach(link => {
+                window.open(link, '_blank');
+            });
+        }
+
+        // Adiciona os event listeners
+        generateButton.addEventListener('click', generateLinks);
+        openAllButton.addEventListener('click', openAllLinks);
+        
+        // Permite gerar ao pressionar "Enter" no campo de input
+        keywordInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                generateLinks();
+            }
+        });
+
+    </script>
+</body>
+</html>
